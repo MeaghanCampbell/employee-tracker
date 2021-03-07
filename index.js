@@ -79,23 +79,7 @@ afterConnection = () => {
     } else if (answer.what === 'addRole') {
       addRole();
     } else if (answer.what === 'addEmployee') {
-      return inquirer.prompt([
-        {
-          type: 'input',
-          name: 'employeeFirstName',
-          message: 'Please enter employees first name.'
-        },
-        {
-          type: 'input',
-          name: 'employeeLastName',
-          message: 'Please enter employees last name'
-        }
-        // another prompt to enter employee manager here
-      ])
-      .then(answer => {
-        // add employee info to the database
-        console.log(answer)
-      })
+      addEmployee();
     } else if (answer.what === 'updateEmployeeRole') {
       return inquirer.prompt([
         {
@@ -134,6 +118,7 @@ function viewRoles() {
   connection.promise().query("SELECT role.id, role.title, role.salary, department.name AS department FROM role LEFT JOIN department ON role.department_id = department.id")
   .then( ([rows]) => {
     console.table(rows)
+    afterConnection()
   })
 }
 
@@ -142,6 +127,7 @@ function viewEmployees() {
   connection.promise().query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, role.title FROM employee LEFT JOIN role ON employee.role_id = role.id")
   .then( ([rows]) => {
     console.table(rows)
+    afterConnection()
   })
 }
 
@@ -157,12 +143,12 @@ function addDepartment(answer) {
     }
   );
   console.log('Department has been added!')
+  afterConnection()
 }
 
 // add a role
 function addRole() {
-  console.log(DB.departments)
-  connection.promise().query(DB.departments)
+  connection.promise().query(DB.getDepartments)
   .then(([rows, fields]) => {
     const departmentChoices = rows.map(({ id, name }) => ({
       name: name,
@@ -191,6 +177,54 @@ function addRole() {
       connection.query(DB.createRole, answer)
       console.log('New role has been added.')
       this.afterConnection()
+    })
+    .catch(console.log)
+  })
+  .catch(console.log)
+}
+
+function addEmployee() {
+  connection.promise().query(DB.getRoles)
+  .then(([rows,fields]) => {
+    const roleChoices = rows.map(({ id, title }) => ({
+      name: title,
+      value: id
+    }))
+    connection.promise().query(DB.getManagers)
+    .then(([rows, fields]) => {
+      const managerChoices = rows.map(({ id, first_name, last_name }) => ({
+        name: `${first_name} ${last_name}`,
+        value: id
+      }))
+      inquirer.prompt([
+        {
+          type: 'input',
+          name: 'first_name',
+          message: 'Please enter employees first name.'
+        },
+        {
+          type: 'input',
+          name: 'last_name',
+          message: 'Please enter employees last name'
+        },
+        {
+          type: 'list',
+          name: 'role_id',
+          message: 'Plase choose employees role',
+          choices: roleChoices
+        },
+        {
+          type: 'list',
+          name: 'manager_id',
+          message: 'Plase choose employees manager',
+          choices: managerChoices
+        }
+      ])
+      .then((answer) => {
+        connection.query(DB.createEmployee, answer)
+        console.log('New employee has been added.')
+        this.afterConnection()
+      })
     })
     .catch(console.log)
   })
