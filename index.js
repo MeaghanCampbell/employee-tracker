@@ -18,6 +18,7 @@ const connection = mysql.createConnection({
 connection.connect(err => {
   if (err) throw err;
   console.log('connected as id ' + connection.threadId);
+  afterConnection()
 });
 
 afterConnection = () => {
@@ -54,7 +55,11 @@ afterConnection = () => {
         {
           name: "Update employee role",
           value: "updateEmployeeRole"
-        }
+        },
+        {
+          name: "Exit",
+          value: "exit"
+        },
       ]
     }
   ])
@@ -81,26 +86,9 @@ afterConnection = () => {
     } else if (answer.what === 'addEmployee') {
       addEmployee();
     } else if (answer.what === 'updateEmployeeRole') {
-      return inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectEmployee',
-          message: 'Please select the employee',
-          // employee data will be displayed here
-          choices: ['employee 1', 'employee 2']
-        },
-        {
-          type: 'list',
-          name: 'employeeNewRole',
-          message: 'What is your new employees role?',
-          // roles from database will populate here
-          choices: ['role 1', 'role 2']
-        }
-      ])
-      .then(answer => {
-        // update employee role in database
-        console.log(answer)
-      })
+      updateEmployeeRole();
+    } else if (answer.what === 'exit') {
+      connection.end()
     }
   })  
 }
@@ -210,13 +198,13 @@ function addEmployee() {
         {
           type: 'list',
           name: 'role_id',
-          message: 'Plase choose employees role',
+          message: 'Please choose employees role',
           choices: roleChoices
         },
         {
           type: 'list',
           name: 'manager_id',
-          message: 'Plase choose employees manager',
+          message: 'Please choose employees manager',
           choices: managerChoices
         }
       ])
@@ -231,4 +219,40 @@ function addEmployee() {
   .catch(console.log)
 }
 
-afterConnection()
+function updateEmployeeRole() {
+  connection.promise().query(DB.getManagers)
+  .then(([rows, fields]) => {
+    const employeeChoices = rows.map(({ id, first_name, last_name }) => ({
+      name: `${first_name} ${last_name}`,
+      value: id
+    }))
+    connection.promise().query(DB.getRoles)
+    .then(([rows, fields]) => {
+      const roleChoices = rows.map(({ id, title }) => ({
+        name: title,
+        value: id
+      }))
+      inquirer.prompt([
+        {
+          type: 'list',
+          name: 'id',
+          message: 'Please select the employee you wish to update',
+          choices: employeeChoices
+        },
+        {
+          type: 'list',
+          name: 'role_id',
+          message: 'What is your new employees role?',
+          choices: roleChoices
+        }
+      ])
+      .then((answer) => {
+        connection.query(DB.updateRole, [answer.role_id, answer.id])
+        console.log('Employees role has been updated')
+        this.afterConnection()
+      })
+    })
+    .catch(console.log)
+  })
+  .catch(console.log)
+}

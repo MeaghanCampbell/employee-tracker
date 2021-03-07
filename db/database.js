@@ -22,6 +22,10 @@ class DB {
       return "INSERT INTO employee SET ?"
     }
 
+    get updateRole() {
+      // issue with this sql syntax
+      return "UPDATE employee SET role_id = ? WHERE id = ?"
+    }
 }
 
 module.exports = new DB()
