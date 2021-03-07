@@ -1,7 +1,24 @@
 const inquirer = require('inquirer')
 const cTable = require('console.table');
 const DB = require('./db/database');
-const { connection } = require('./db/database');
+
+const mysql = require('mysql2');
+ 
+// Create the connection to database
+const connection = mysql.createConnection({
+  host: 'localhost',
+  port: 3306,
+  // Your MySQL username
+  user: 'root',
+  // Your MySQL password
+  password: 'singstar73',
+  database: 'employees'
+});
+
+connection.connect(err => {
+  if (err) throw err;
+  console.log('connected as id ' + connection.threadId);
+});
 
 afterConnection = () => {
   return inquirer.prompt([
@@ -60,28 +77,7 @@ afterConnection = () => {
         addDepartment(answer)
       })
     } else if (answer.what === 'addRole') {
-      return inquirer.prompt([
-        {
-          type: 'input',
-          name: 'newRole',
-          message: 'what is the name of the role?'
-        },
-        {
-          type: 'input',
-          name: 'roleSalary',
-          message: 'what is the salary for the role?'
-        },
-        {
-          type: 'list',
-          name: 'roleDepartment',
-          message: 'What department is this role in?',
-          // need help with this part
-          choices: [ connection.promise().query("SELECT department.name FROM department") ]
-        }
-      ])
-      .then(answer => {
-        addRole(answer)
-      })
+      addRole();
     } else if (answer.what === 'addEmployee') {
       return inquirer.prompt([
         {
@@ -164,21 +160,41 @@ function addDepartment(answer) {
 }
 
 // add a role
-function addRole(answer) {
-  console.log(answer.newDepartment)
-  connection.promise().query(
-    'INSERT INTO role SET ?',
-    {
-      title: answer.newRole,
-      salary: answer.roleSalary,
-      department_id: answer.roleDepartment
-    },
-    function(err, res) {
-      if (err) throw err;
-    }
-  );
-  console.log('Role has been added!')
-}
+function addRole() {
+  console.log(DB.departments)
+  connection.promise().query(DB.departments)
+  .then(([rows, fields]) => {
+    const departmentChoices = rows.map(({ id, name }) => ({
+      name: name,
+      value: id
+    }))
 
+    inquirer.prompt([
+        {
+          type: 'input',
+          name: 'title',
+          message: 'what is the name of the role?'
+        },
+        {
+          type: 'input',
+          name: 'salary',
+          message: 'what is the salary for the role?'
+        },
+        {
+          type: 'list',
+          name: 'department_id',
+          message: 'What department is this role in?',
+          choices: departmentChoices
+        }
+    ])
+    .then((answer) => {
+      connection.query(DB.createRole, answer)
+      console.log('New role has been added.')
+      this.afterConnection()
+    })
+    .catch(console.log)
+  })
+  .catch(console.log)
+}
 
 afterConnection()
