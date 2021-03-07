@@ -20,6 +20,12 @@ class DB {
     constructor(connection) {
         this.connection = connection
     }
+
+    // create a new role
+    createRole() {
+      return this.connection.promise().query("INSERT INTO role SET ?")
+    }
+
 }
 
 module.exports = new DB(connection)
