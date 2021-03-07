@@ -1,6 +1,7 @@
 const inquirer = require('inquirer')
 const cTable = require('console.table');
-const DB = require('./db/database')
+const DB = require('./db/database');
+const { connection } = require('./db/database');
 
 afterConnection = () => {
   return inquirer.prompt([
@@ -42,14 +43,11 @@ afterConnection = () => {
   ])
   .then(answer => {
     if (answer.what === 'viewDepartments') {
-      // view department names & id's from database
-      console.log('view departments')
+      viewDepartments()
     } else if (answer.what === 'viewRoles') {
-      // view job titles, role id's, departments that role belongs to and salary from database
-      console.log('view roles')
+      viewRoles()
     } else if (answer.what === 'viewEmployees') {
-      // view id's, firstnames, lastnames, job titles, departments, salaries, and manager they report to from database
-      console.log('view employees')
+      viewEmployees()
     } else if (answer.what === 'addDepartment') {
       return inquirer.prompt([
         {
@@ -121,5 +119,27 @@ afterConnection = () => {
     }
   })  
 }
+
+function viewDepartments() {
+  connection.promise().query("SELECT * FROM department")
+  .then( ([rows]) => {
+    console.table(rows)
+  })
+}
+
+function viewRoles() {
+  connection.promise().query("SELECT role.id, role.title, role.salary, department.name AS department FROM role LEFT JOIN department ON role.department_id = department.id")
+  .then( ([rows]) => {
+    console.table(rows)
+  })
+}
+
+function viewEmployees() {
+  connection.promise().query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, role.title FROM employee LEFT JOIN role ON employee.role_id = role.id")
+  .then( ([rows]) => {
+    console.table(rows)
+  })
+}
+
 
 afterConnection()
