@@ -57,8 +57,7 @@ afterConnection = () => {
         }
       ])
       .then(answer => {
-        // add dept name to the database
-        console.log(answer)
+        addDepartment(answer)
       })
     } else if (answer.what === 'addRole') {
       return inquirer.prompt([
@@ -71,11 +70,17 @@ afterConnection = () => {
           type: 'input',
           name: 'roleSalary',
           message: 'what is the salary for the role?'
+        },
+        {
+          type: 'list',
+          name: 'roleDepartment',
+          message: 'What department is this role in?',
+          // need help with this part
+          choices: [ connection.promise().query("SELECT department.name FROM department") ]
         }
       ])
       .then(answer => {
-        // add role info to the database
-        console.log(answer)
+        addRole(answer)
       })
     } else if (answer.what === 'addEmployee') {
       return inquirer.prompt([
@@ -120,6 +125,7 @@ afterConnection = () => {
   })  
 }
 
+// view all depts
 function viewDepartments() {
   connection.promise().query("SELECT * FROM department")
   .then( ([rows]) => {
@@ -127,6 +133,7 @@ function viewDepartments() {
   })
 }
 
+// view all roles
 function viewRoles() {
   connection.promise().query("SELECT role.id, role.title, role.salary, department.name AS department FROM role LEFT JOIN department ON role.department_id = department.id")
   .then( ([rows]) => {
@@ -134,11 +141,43 @@ function viewRoles() {
   })
 }
 
+// view all employees
 function viewEmployees() {
   connection.promise().query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, role.title FROM employee LEFT JOIN role ON employee.role_id = role.id")
   .then( ([rows]) => {
     console.table(rows)
   })
+}
+
+// add a department
+function addDepartment(answer) {
+  connection.promise().query(
+    'INSERT INTO department SET ?',
+    {
+      name: answer.newDepartment
+    },
+    function(err, res) {
+      if (err) throw err;
+    }
+  );
+  console.log('Department has been added!')
+}
+
+// add a role
+function addRole(answer) {
+  console.log(answer.newDepartment)
+  connection.promise().query(
+    'INSERT INTO role SET ?',
+    {
+      title: answer.newRole,
+      salary: answer.roleSalary,
+      department_id: answer.roleDepartment
+    },
+    function(err, res) {
+      if (err) throw err;
+    }
+  );
+  console.log('Role has been added!')
 }
 
 
