@@ -80,6 +80,7 @@ afterConnection = () => {
       ])
       .then(answer => {
         addDepartment(answer)
+        afterConnection()
       })
     } else if (answer.what === 'addRole') {
       addRole();
@@ -98,6 +99,7 @@ function viewDepartments() {
   connection.promise().query("SELECT * FROM department")
   .then( ([rows]) => {
     console.table(rows)
+    afterConnection()
   })
 }
 
@@ -130,8 +132,6 @@ function addDepartment(answer) {
       if (err) throw err;
     }
   );
-  console.log('Department has been added!')
-  afterConnection()
 }
 
 // add a role

@@ -10,7 +10,7 @@ This commpand line app tracks employees in a company using node.js, mysql and in
 Clone the github repsoitory and enter the command "node index" in the terminal to start the app. Choose from prompts to view, add to and update the database.
 
 # links
-Clone the code from [https://github.com/MeaghanCampbell/employee-tracker](https://github.com/MeaghanCampbell/employee-tracker)
+Clone the code from [https://github.com/MeaghanCampbell/employee-tracker](https://github.com/MeaghanCampbell/employee-tracker) and watch the video [here](https://drive.google.com/file/d/1LFJVlc9TEascVjuPkL4qrcCCvBNnGcb8/view?usp=sharing)
 
 # credits
 Meaghan Campbell
